@@ -28,8 +28,6 @@ sm.register({
         let client = await CT.getClient(req.query.project)
         let subscription = await client.subscriptions.get({ key: req.query.subscription })
     
-        console.log(JSON.stringify(config.get('pubSub')))
-
         if (subscription) {
             res.status(400).json({ message: `Subscription [ ${req.query.subscription} ] already registered on project [ ${req.query.project} ]`})
         }
@@ -44,7 +42,7 @@ sm.register({
                     messages: mapResourceTypeIds(subscriptionTemplate.messages)
                 }
     
-                let result = (await client.subscriptions.create(payload)).body
+                let result = (await client.subscriptions.ensure(payload)).body
 
                 // console.log(JSON.stringify(payload))
 
@@ -72,6 +70,15 @@ sm.register({
     }
 })
 
+sm.register({
+    relativePath: 'pubsub',
+    method: 'POST',
+    handler: async (req, res) => {
+        processMessage(req.body)
+        res.status(200).json(req.body)
+    }
+})
+
 module.exports = sm
 
 // local function declarations
@@ -93,7 +100,7 @@ let processMessage = async message => {
 
         let sent = false
         let subscriptions = await ct.subscriptions.get()
-        _.each(_.filter(subscribers, sub => _.includes(_.map(subscriptions, 'key'), sub.key)), subscriber => {
+        _.each(_.filter(this.subscribers, sub => _.includes(_.map(subscriptions, 'key'), sub.key)), subscriber => {
             if (resourceType === 'Message') {
                 if (subscriber.messages && subscriber.messages[message.notificationType]) {
                     let method = subscriber.messages[message.notificationType]
@@ -111,7 +118,7 @@ let processMessage = async message => {
         })
 
         if (!sent) {
-            console.error(`No subscriber found with project key [ ${projectKey} ] for notification type [ ${message.type} ]`)
+            console.error(`No subscriber found with project key [ ${projectKey} ] for notification type [ ${resourceType} / ${message.notificationType} ]`)
         }
     } catch (error) {
         console.error(`Error processing message: `)    
@@ -136,19 +143,3 @@ if (!_.isEmpty(topic)) {
 else {
     logger.error(`PubSub topic not found`)
 }
-
-// module.exports = (app) => {
-//     if (app) {
-//         app.post('/pubsub', (req, res) => {
-//             processMessage(req.body)
-//             res.status(200).json(req.body)
-//         })
-//     }
-
-//     return {
-//         addSubscriber: subscriber => subscribers.push(subscriber),
-//         getSubscriber: key => {
-//             return _.first(_.filter(subscribers, sub => sub.key === key))
-//         }
-//     }
-// }

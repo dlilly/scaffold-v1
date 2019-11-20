@@ -1,5 +1,3 @@
-const CT = require('ctvault')
-
 // express app setup
 const express = require('express')
 const app = express();

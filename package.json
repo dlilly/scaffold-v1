@@ -5,24 +5,15 @@
   "dependencies": {
     "@google-cloud/pubsub": "^0.31.1",
     "cors": "^2.8.5",
-    "ctvault": "git+ssh://git@github.com/dlilly/ctvault.git",
     "fs-extra": "^8.1.0",
     "js-levenshtein": "^1.1.6",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.15",
     "nconf": "^0.10.0",
-    "react-scripts": "3.1.1"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "server": "node-env-run server --exec nodemon",
-    "dev": "run-p server start"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-scripts": "3.1.1",
+    "typescript": "^3.7.2"
   },
   "browserslist": {
     "production": [

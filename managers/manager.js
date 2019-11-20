@@ -1,5 +1,7 @@
 const _ = require('lodash')
 
+const CT = require('ctvault')
+
 class Manager {
     constructor() {
         this.items = []
@@ -51,10 +53,15 @@ class Manager {
         // find the extension that handles this path
         let mappedManagers = _.map(this.managers, m => m.getByPath(req.path))
         let mm = _.first(_.filter(mappedManagers, m => m.item))
-        if (!mm.manager) {
+        if (!mm || !mm.manager) {
             logger.error(`Couldn't figure out where to send me: ${req.path}`)
             res.status(200).json({ actions: [] })
         }
+
+        let projectKey = req.headers['authorization']
+        let ct = await CT.getClient(projectKey)
+
+        req.ct = ct
 
         if (mm.item) {
             if (mm.item.handler) {

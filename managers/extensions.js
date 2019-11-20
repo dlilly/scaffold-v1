@@ -16,7 +16,7 @@ class ExtensionManager extends Manager {
             try {
                 let resource = req.body && req.body.resource && req.body.resource.obj
                 let ct = await CT.getClient(projectKey)
-    
+
                 let actions = []
     
                 if (extension.triggers) {
