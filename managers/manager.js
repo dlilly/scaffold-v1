@@ -65,6 +65,12 @@ class Manager {
 
         if (mm.item) {
             if (mm.item.handler) {
+                if (mm.item.requiredParameters) {
+                    let missingParameters = _.filter(mm.item.requiredParameters, param => !req.query[param])
+                    if (missingParameters.length > 0) {
+                        return next({ error: `Missing parameters: [${missingParameters.join(',')}]` })
+                    }
+                }
                 mm.item.handler(req, res, next)
             }
             else {
