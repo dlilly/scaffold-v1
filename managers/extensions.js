@@ -11,7 +11,7 @@ class ExtensionManager extends Manager {
 
     handleRequest = extension => {
         return async (req, res) => {
-            let projectKey = req.headers['authorization']
+            let projectKey = req.headers['authorization'] || req.headers['X-CTP-Project']
         
             try {
                 let resource = req.body && req.body.resource && req.body.resource.obj

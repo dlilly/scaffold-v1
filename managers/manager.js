@@ -57,11 +57,14 @@ class Manager {
             logger.error(`Couldn't figure out where to send me: ${req.path}`)
             res.status(200).json({ actions: [] })
         }
-
-        let projectKey = req.headers['authorization']
-        let ct = await CT.getClient(projectKey)
-
-        req.ct = ct
+        
+        try {
+            let projectKey = req.headers['authorization'] || req.headers['x-ctvault-client-id']
+            let ct = await CT.getClient(projectKey)
+            req.ct = ct
+        } catch (error) {
+            return next({ error: error.message })
+        }
 
         if (mm.item) {
             if (mm.item.handler) {
