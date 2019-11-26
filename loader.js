@@ -13,6 +13,17 @@ let loadModules = async (app) => {
     app.use(bodyParser.text({ type: 'text/plain' }));
     app.use(bodyParser.json())
 
+    app.use('/api', (req, res, next) => {
+        if ('options' === req.method || 'OPTIONS' === req.method) {
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+            res.send(200);
+        }
+        else {
+            manager.handle(req, res, next)
+        }
+    })
     app.use('/api', manager.handle)
     app.use(errorHandler)
 
