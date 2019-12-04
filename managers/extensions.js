@@ -9,6 +9,11 @@ class ExtensionManager extends Manager {
         this.key = 'extensions'
     }
 
+    getHandler = (action, extension) => {
+        let trigger = _.first(_.filter(extension.triggers, trigger => trigger.action === action))
+        return trigger && trigger.handler
+    }
+
     handleRequest = extension => {
         return async (req, res) => {
             let projectKey = req.headers['authorization'] || req.headers['X-CTP-Project']
@@ -30,9 +35,6 @@ class ExtensionManager extends Manager {
                     
                     logger.debug(`actions ${JSON.stringify({ actions: _.flatMap(actions) }, '', 4)}`)
                     res.status(200).json({ actions: _.flatMap(actions) })
-                }
-                else if (extension.handler) {
-                    extension.handler(req, res)
                 }
             } catch (error) {
                 logger.error(error)

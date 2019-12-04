@@ -7,6 +7,10 @@ class MicroservicesManager extends Manager {
         super()
         this.key = 'microservices'
     }
+
+    getHandler = (action, extension) => {
+        return extension.handler
+    }
 }
 
 let mm = new MicroservicesManager()
