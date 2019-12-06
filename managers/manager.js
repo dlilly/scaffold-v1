@@ -1,35 +1,81 @@
+const fs = require('fs-extra')
 const _ = require('lodash')
+const config = require('../config')
 
 const CT = require('ctvault')
+const express = require('express')
 
 class Manager {
-    constructor() {
+    constructor(opts = {}) {
+        this.opts = opts
         this.items = []
         this.managers = []
         this.key = 'manager'
     }
 
-    register = item => {
-        item.type = this.key
+    async load() {
+        this.router = express.Router()
 
-        if (item.relativePath) {
-            item.path = `/${this.key}/${item.relativePath}`
+        this.manage(require('./extensions')(this.router))
+        this.manage(require('./subscriptions')(this.router))
+        this.manage(require('./microservices')(this.router))
+        this.manage(require('./credentials')(this.router))
+
+        _.each(this.managers, manager => {
+            _.each(manager.opts.routes, route => {
+                route.path = `/${manager.key}${route.relativePath}`
+                this.register(route)
+            })
+        })
+
+        let scaffoldModuleDir = config.get('CT_SCAFFOLD_MODULE_DIR')
+        if (!scaffoldModuleDir) {
+            logger.error(`Couldn't find scaffold module directory.  Check your CT_SCAFFOLD_MODULE_DIR`)
+            process.exit(0)
         }
-
-        this.items.push(item)
+    
+        let directories = _.filter(fs.readdirSync(scaffoldModuleDir, { withFileTypes: true }), dir => dir.isDirectory() && _.includes(fs.readdirSync(`${scaffoldModuleDir}/${dir.name}`), 'scaffold.js'))
+    
+        let loadDir = async entry => {
+            const indexPath = `${scaffoldModuleDir}/${entry.name}/scaffold.js`
+            if (fs.existsSync(indexPath)) {
+                const serviceConfig = require(indexPath)
+                this.registerServiceConfig(serviceConfig)
+    
+                if (serviceConfig.public && serviceConfig.public.path) {
+                    const publicPath = `${scaffoldModuleDir}/${entry.name}/${serviceConfig.public.path}`
+                    if (fs.existsSync(publicPath)) {
+                        this.router.use(`/${serviceConfig.public.name}`, express.static(publicPath))
+                    }
+                }
+            }
+        }
+    
+        await Promise.all(_.map(directories, await loadDir))
     }
 
-    registerMany = itemArray => {
-        _.each(itemArray, this.register)
+    register(item) {
+        item.method = (item.method || 'get').toLowerCase()
+        
+        this.items.push(item)
+        if (item.path && this.router) {
+            let apiPath = `/api${item.path}`
+            console.log(`register ${item.method} [ ${apiPath} ]`)
+            this.router[item.method](apiPath, this.handle(item))
+        }
+    }
+
+    registerMany(itemArray) {
+        _.each(itemArray, this.register.bind(this))
     }
 
     registerServiceConfig(serviceConfig) {
-        this.getManager('extensions').registerMany(serviceConfig.extensions)
-        this.getManager('subscriptions').registerMany(serviceConfig.subscribers)
-        this.getManager('microservices').registerMany(serviceConfig.microservices)
+        this.registerMany(serviceConfig.extensions)
+        this.registerMany(serviceConfig.subscribers)
+        this.registerMany(serviceConfig.microservices)
     }
 
-    get = key => {
+    get(key) {
         return _.first(_.filter(this.items, x => x.key === key))
     }
 
@@ -37,95 +83,58 @@ class Manager {
         return _.first(_.filter(this.managers, m => m.key === key))
     }
 
-    getByRequest(req) {
-        let filtered = _.filter(this.items, x => {
-            let match = req.method.toLowerCase() === 'get' || (x.method && x.method.toLowerCase()) === req.method.toLowerCase()
-            if (x.path) {
-                let xparts = x.path.split('/')
-                let pparts = req.path.split('/')
-
-                if (xparts.length !== pparts.length) {
-                    match = false
-                }
-                else {
-                    for (const [index, xpart] of xparts.entries()) {
-                        if (xpart.indexOf(':') === 0) {
-                            if (_.isEmpty(pparts[index])) {
-                                match = false
-                                break;
-                            }
-    
-                            let key = xpart.replace(':', '')
-                            x.params = x.params || {}
-                            x.params[key] = pparts[index]
-                        }
-                        else {
-                            if (xpart !== pparts[index]) {
-                                match = false
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                match = false
-            }
-            return match
-        })
-
-        return { manager: this, item: _.first(filtered) }
-    }
-
-    manage = manager => {
+    manage(manager) {
         this.managers.push(manager)
     }
 
-    handleRequest = () => {
-        logger.debug(`you need to override handleRequest()`)
-    }
-
-    getHandler = () => {
-        logger.debug(`you need to override getHandler()`)
-    }
-
-    handle = async (req, res, next) => {
-        // find the extension that handles this path
-        let mappedManagers = _.map(this.managers, m => m.getByRequest(req))
-        let mm = _.first(_.filter(mappedManagers, m => m.item))
-        
-        if (!mm || !mm.manager) {
-            logger.error(`Couldn't figure out where to send me: ${req.path}`)
-            return res.status(200).json({ actions: [] })
-        }
-        
-        try {
-            let projectKey = req.headers['authorization'] || req.headers['x-ctvault-client-id']
-            let ct = await CT.getClient(projectKey)
+    handle(item) {
+        return async (req, res, next) => {
+            if (!item) {
+                logger.error(`Couldn't figure out where to send me: ${req.path}`)
+                return res.status(200).json({ actions: [] })
+            }
             
-            if (mm.item) {
+            try {           
+                let projectKey = req.headers['authorization'] || req.headers['x-ctvault-client-id']
+                let ct = item.isAdmin ? {} : await CT.getClient(projectKey)
+
                 let data = { 
-                    ...req.query, 
-                    ...req.body,
-                    params: mm.item.params,
-                    object: req.body.resource && req.body.resource.obj
+                    params: {
+                        ...req.query,
+                        ...req.params
+                    },
+                    object: req.body.resource && req.body.resource.obj || req.body
                 }
 
-                if (mm.item.requiredParameters) {
-                    let missingParameters = _.filter(mm.item.requiredParameters, param => !req.query[param])
+                if (item.requiredParameters) {
+                    let missingParameters = _.filter(item.requiredParameters, param => !req.query[param])
                     if (missingParameters.length > 0) {
                         return next({ error: `Missing parameters: [${missingParameters.join(',')}]` })
                     }
                 }
 
-                let action = `${data.resource && data.resource.typeId}${data.action}`
-                let handler = mm.manager.getHandler(action, mm.item)
+                // let handler = mm.manager.getHandler(data.action, data.resource && data.resource.typeId, mm.item)
+                item.getHandler = () => {
+                    if (item.triggers) {
+                        let typeTriggers = item.triggers[req.body.resource && req.body.resource.typeId]
+                        if (typeTriggers) {
+                            let actionTrigger = typeTriggers[req.body.action]
+                            if (actionTrigger) {
+                                return actionTrigger
+                            }
+                        }
+                    }
+            
+                    return item.handler
+                }
+
+                let handler = item.getHandler()
                 let response = await handler(data, ct)
                 res.status(200).json(response)
+            } catch (error) {
+                console.error(error.stack)
+                return next(error.message)
             }
-        } catch (error) {
-            console.error(error.stack)
-            return next({ error: error.message })
         }
     }
 }

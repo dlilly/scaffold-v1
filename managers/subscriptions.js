@@ -6,9 +6,13 @@ const Manager = require('./manager')
 const CT = require('ctvault')
 
 class SubscriptionManager extends Manager {
-    constructor() {
-        super()
+    constructor(opts) {
+        super(opts)
         this.key = 'subscriptions'
+    }
+
+    register(item) {
+        this.items.push(item)
     }
 }
 
@@ -23,16 +27,15 @@ let mapResourceTypeIds = obj => {
 }
 
 sm.register({
-    relativePath: 'register',
-    handler: async (req, res) => {
-        let client = await CT.getClient(req.query.project)
-        let subscription = await client.subscriptions.get({ key: req.query.subscription })
-    
+    relativePath: '',
+    method: 'POST',
+    handler: async (data, ct) => {
+        let subscription = await ct.subscriptions.get({ key: data.object.subscription })
         if (subscription) {
-            res.status(400).json({ message: `Subscription [ ${req.query.subscription} ] already registered on project [ ${req.query.project} ]`})
+            throw new Error(`Subscription [ ${data.object.subscription} ] already registered on project [ ${data.object.project} ]`)
         }
         else {
-            let subscriptionTemplate = subscriptionManager.get(req.query.subscription)
+            let subscriptionTemplate = sm.get(data.object.subscription)
     
             if (subscriptionTemplate) {
                 let payload = {
@@ -42,44 +45,43 @@ sm.register({
                     messages: mapResourceTypeIds(subscriptionTemplate.messages)
                 }
     
-                let result = (await client.subscriptions.ensure(payload)).body
-
-                // console.log(JSON.stringify(payload))
-
-                res.status(200).json(result)
+                let result = (await ct.subscriptions.ensure(payload)).body
+                return result
             }
             else {
-                res.status(400).json({ message: `Subscription template [ ${req.query.subscription} ] not found`})
+                throw new Error(`Subscription template [ ${data.object.subscription} ] not found`)
             }
         }
     }
 })
 
 sm.register({
-    relativePath: 'deregister',
-    handler: async (req, res) => {
-        let client = await CT.getClient(req.query.project)
-        let subscription = await client.subscriptions.get({ key: req.query.subscription })
-        
+    relativePath: '/:key',
+    method: 'DELETE',
+    handler: async (data, ct) => {
+        let subscription = _.first(await ct.subscriptions.get({ key: data.params.subscription }))
         if (subscription) {
-            res.status(200).json(await client.subscriptions.delete(subscription))
+            return await ct.subscriptions.delete(subscription)
         }
         else {
-            res.status(400).json({ message: `Subscription [ ${req.query.subscription} ] not registered on project [ ${req.query.project} ]`})
+            throw new Error(`Subscription [ ${data.params.subscription} ] not registered on project [ ${data.params.project} ]`)
         }
     }
 })
 
 sm.register({
-    relativePath: 'pubsub',
+    relativePath: '/pubsub',
     method: 'POST',
-    handler: async (req, res) => {
-        processMessage(req.body)
-        res.status(200).json(req.body)
+    handler: async (data, ct) => {
+        processMessage(data)
+        return data
     }
 })
 
-module.exports = sm
+module.exports = router => {
+    sm.router = router
+    return sm
+}
 
 // local function declarations
 let processMessage = async message => {
@@ -104,14 +106,14 @@ let processMessage = async message => {
             if (resourceType === 'Message') {
                 if (subscriber.messages && subscriber.messages[message.notificationType]) {
                     let method = subscriber.messages[message.notificationType]
-                    method(resource, ct)
+                    method({ object: resource }, ct)
                     sent = true
                 }
             }
             else {
                 if (subscriber.changes && subscriber.changes[resourceType] && subscriber.changes[resourceType][message.notificationType]) {
                     let method = subscriber.changes[resourceType][message.notificationType]
-                    method(resource, ct)
+                    method({ object: resource }, ct)
                     sent = true
                 }
             }

@@ -3,15 +3,14 @@ const _ = require('lodash')
 const Manager = require('./manager')
 
 class MicroservicesManager extends Manager {
-    constructor() {
-        super()
+    constructor(opts) {
+        super(opts)
         this.key = 'microservices'
-    }
-
-    getHandler = (action, extension) => {
-        return extension.handler
     }
 }
 
 let mm = new MicroservicesManager()
-module.exports = mm
+module.exports = router => {
+    mm.router = router
+    return mm
+}
