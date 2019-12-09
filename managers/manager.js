@@ -60,7 +60,7 @@ class Manager {
         this.items.push(item)
         if (item.path && this.router) {
             let apiPath = `/api${item.path}`
-            console.log(`register ${item.method} [ ${apiPath} ]`)
+            // console.log(`register ${item.method} [ ${apiPath} ]`)
             this.router[item.method](apiPath, this.handle(item))
         }
     }
