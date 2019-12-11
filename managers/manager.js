@@ -65,14 +65,15 @@ class Manager {
         }
     }
 
-    registerMany(itemArray) {
+    registerMany(itemArray, type) {
+        _.each(itemArray, item => item.type = type)
         _.each(itemArray, this.register.bind(this))
     }
 
     registerServiceConfig(serviceConfig) {
-        this.registerMany(serviceConfig.extensions)
-        this.registerMany(serviceConfig.subscribers)
-        this.registerMany(serviceConfig.microservices)
+        this.registerMany(serviceConfig.extensions, 'extension')
+        this.registerMany(serviceConfig.subscribers, 'subscriber')
+        this.registerMany(serviceConfig.microservices, 'microservice')
     }
 
     get(key) {
@@ -130,7 +131,7 @@ class Manager {
 
                 let handler = item.getHandler()
                 let response = await handler(data, ct)
-                res.status(200).json(response)
+                res.status(200).json(item.type === 'extension' ? { actions: response } : response)
             } catch (error) {
                 console.error(error.stack)
                 return next(error.message)
