@@ -2,7 +2,7 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const express = require('express')
 const middleware = require('./middleware')
-const utils = require('./utils')
+require('./utils')
 
 let router = express.Router()
 let routes = []
@@ -11,13 +11,9 @@ router.processPubSub = require('./subscriber')
 
 let scaffoldModuleDir = (`${__dirname}/../modules`)
 
-// if the scaffold module dir doesn't exist create it
-if (!fs.existsSync(scaffoldModuleDir)) {
-    fs.mkdirSync(scaffoldModuleDir)
-}
-
 let directories = _.map(_.filter(fs.readdirSync(scaffoldModuleDir, { withFileTypes: true }), dir => dir.isDirectory() && _.includes(fs.readdirSync(`${scaffoldModuleDir}/${dir.name}`), 'scaffold.js')), e => `${scaffoldModuleDir}/${e.name}`)
 
+// local method declarations
 let register = (type, module) => service => {
     service.module = module
     service.type = type
@@ -60,23 +56,28 @@ let loadDir = dir => {
         _.each(Object.keys(serviceConfig), key => _.each(Array.ensureArray(serviceConfig[key]), register(key, module)))
     }
 }
+// end local method declaration
+
+// if the scaffold module dir doesn't exist create it
+if (!fs.existsSync(scaffoldModuleDir)) {
+    fs.mkdirSync(scaffoldModuleDir)
+}
 
 router.use('/api', middleware.readCTConfiguration)
 
-_.each(directories, loadDir)
+if (directories.length > 0) {
+    // load each module directory
+    _.each(directories, loadDir)
+}
+else {
+    // load the root module directory if this is a single service deployment
+    loadDir(scaffoldModuleDir)
+}
+
+// load scaffold services (metadata)
 loadDir(`${__dirname}/services`)
 
 router.get('/api', (req, res) => res.json(routes))
-
-// sm.register({
-//     relativePath: '/pubsub',
-//     method: 'POST',
-//     handler: async (data, ct) => {
-//         processMessage(data)
-//         return data
-//     }
-// })
-
 router.getService = key => _.first(_.filter(routes, k => k.key === key))
 
 module.exports = router
