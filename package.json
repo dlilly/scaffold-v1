@@ -1,35 +1,21 @@
 {
-  "name": "tiffany-site",
+  "name": "scaffold",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@google-cloud/pubsub": "^0.31.1",
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "express": "^4.17.1",
     "fs-extra": "^8.1.0",
     "js-levenshtein": "^1.1.6",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.15",
     "nconf": "^0.10.0",
-    "react": "^16.11.0",
-    "react-dom": "^16.11.0",
-    "react-scripts": "3.1.1",
-    "typescript": "^3.7.2"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "uuid": "^3.4.0",
+    "ctvault": "^1.0.7"
   },
   "devDependencies": {
-    "body-parser": "^1.19.0",
-    "express": "^4.17.1",
     "node-env-run": "^3.0.2",
     "npm-run-all": "^4.1.5"
   },
@@ -46,5 +32,13 @@
   "bugs": {
     "url": "https://github.com/dlilly/scaffold/issues"
   },
-  "homepage": "https://github.com/dlilly/scaffold#readme"
+  "homepage": "https://github.com/dlilly/scaffold#readme",
+  "scripts": {
+    "start": "node server/server.js",
+    "ci-lint": "yarn run lint",
+    "ci-test": "yarn run test",
+    "ci-package": "docker build --tag gcr.io/ct-sales-207211/scaffold:latest .",
+    "ci-push": "docker push gcr.io/ct-sales-207211/scaffold:latest",
+    "ci-deploy": "helm upgrade scaffold helm-chart/scaffold --install --wait --force --set image.tag=latest"
+  }
 }

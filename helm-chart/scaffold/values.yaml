@@ -1,0 +1,65 @@
+# Default values for scaffold-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Commercetools/microservice secret configuration
+#
+# Project key, client ID, and client secret are stored as K8s secrets, consumed by
+# the deployment.yaml template. Other app configuration should be checked in as .env files
+# under /config directory in the repository root. (See README.md in package root.)
+#
+# All secrets should be strings and will be base64 encoded when the template is parsed.
+secrets:
+  COMMERCETOOLS_CLIENT_ID: dummy-client-id
+  COMMERCETOOLS_CLIENT_SECRET: dummy-client-secret
+  COMMERCETOOLS_SCOPES: dummy-scope
+
+# Other environment variables may be specified here for consumption by deployment.yaml;
+# Values.env and Values.secret are both exposed within the container as environment variables
+env:
+  COMMERCETOOLS_PROJECT_KEY: dummy-project-key
+  EXPRESS_PORT: 3001 # Should match .env configuration
+
+replicaCount: 1
+
+image:
+  repository: gcr.io/ct-sales-207211/scaffold
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "kong" # Must specify "kong", or will default to "gce" in a GKE cluster
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: blueprint.sales.us-central1.gcp.ct-app.com
+      paths:
+        - /
+  tls:
+    - secretName: scaffold-tls
+      hosts:
+        - blueprint.sales.us-central1.gcp.ct-app.com
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

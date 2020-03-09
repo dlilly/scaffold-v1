@@ -1,0 +1,109 @@
+.icon {
+    position: relative;
+    top: 6px;
+}
+
+#credentialDetail {
+    overflow: scroll;
+}
+
+ul {
+    .region, .module {
+        background-color: #2A4148;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .project {
+        &:hover {
+            background-color: #F5A730;
+            color: #fff;
+            font-weight: bold;
+        }
+    }
+}
+
+#credentialCreate {
+    .center {
+        text-align: center;
+        font-size: 0.9em;
+        padding: 10 0 10 0;
+    }
+
+    form {
+        padding-top: 10;
+    }
+
+    label {
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+
+    .icon {
+        top: 10px;
+        &.icon-check { 
+            color: #20AD92 
+        }
+    }
+
+    .error {
+        border-color: #f30000;
+        border-width: 1.5px;
+    }
+
+    .success {
+        border-color: #20AD92;
+        border-width: 1.5px;
+    }
+}
+
+input[type=checkbox]{
+	height: 0;
+	width: 0;
+	visibility: hidden;
+}
+
+.toggle-switch {
+	cursor: pointer;
+	text-indent: -9999px;
+    width: 60px;
+    height: 30px;
+	background: grey;
+	display: block;
+	border-radius: 100px;
+	position: relative;
+    padding: 0;
+}
+
+.toggle-switch:after {
+	content: '';
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	width: 20px;
+	height: 20px;
+	background: #fff;
+	border-radius: 20px;
+	transition: 0.3s;
+}
+
+.toggle:checked + .toggle-switch {
+	background: #bada55;
+}
+
+.toggle:checked + .toggle-switch:after {
+	left: calc(100% - 5px);
+	transform: translateX(-100%);
+}
+
+.toggle-switch:active:after {
+	width: 30px;
+}
+
+// centering
+body {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}

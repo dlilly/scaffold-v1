@@ -1,0 +1,7 @@
+apiVersion: v1
+appVersion: 0.1.0
+description: Helm chart for NodeJS microservice template
+name: scaffold
+version: 0.1.0
+sources:
+  - https://github.com/commercetools/blueprint

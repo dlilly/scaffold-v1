@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: scaffold-certificate
+spec:
+  domains:
+    - blueprint.sales.us-central1.gcp.ct-app.com

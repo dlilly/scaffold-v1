@@ -1,4 +1,4 @@
-# Medusa
+# scaffold
 ## Motivation
 I need a framework with which I can quickly deploy one or more of the following:
 
@@ -8,7 +8,7 @@ I need a framework with which I can quickly deploy one or more of the following:
 
 In deploying these types of projects, there is usually a fair amount of boilerplate code involved.  Boilerplate code tends to hinder reusability, and code duplication can be an indicator of poor code quality.  Moreover, if we are forced to start completely over for each project that means that extra time is taken during the “duplicated” phases of each.
 
-Medusa provides a framework for easily deploying code without many extra steps. Medusa leverages ctclient.js, which is a wrapper around the JavaScript CTP SDK that abstracts away credential management and uses async/await.
+scaffold provides a framework for easily deploying code without many extra steps. scaffold leverages [ctvault](https://github.com/dlilly/ctvault), which is a wrapper around the JavaScript CTP SDK that abstracts away credential management and uses async/await.
 
 ## Tech Stack
 
@@ -17,19 +17,19 @@ Medusa provides a framework for easily deploying code without many extra steps. 
 
 ## Features
 
-Medusa will, given a configuration object with the following keys, set up this infrastructure:
+scaffold will, given a configuration object with the following keys, set up this infrastructure:
 
-* `subscriber` Medusa connects to a Google PubSub topic called 'poc-events'.  Given an event that matches what this subscriber is listening for, it will pass the event to the subscriber to handle.
+* `subscriber` scaffold connects to a Google PubSub topic called 'poc-events'.  Given an event that matches what this subscriber is listening for, it will pass the event to the subscriber to handle.
 * `routes` Each route that is exposed here will be mounted under /api/`route.path` and use the provided `route.handler` when a request comes in for the API endpoint.
-* `public` Medusa will mount the `route.public` directory under /`route.name` if defined for UI.
+* `public` scaffold will mount the `route.public` directory under /`route.name` if defined for UI.
 
 ## Configuration
 
-Medusa looks by default for its configuration in `config/default.json`.  Right now the following configuration options are available:
+scaffold looks by default for its configuration in `config/default.json`.  Right now the following configuration options are available:
 
 | option        | value         |
 | ------------- |---------------|
-| `port` | port on which to run medusa |
-| `directories` | a list of directories to scan for Medusa config. `#base#` will be replaced by the base directory |
+| `port` | port on which to run scaffold |
+| `directories` | a list of directories to scan for scaffold config. `#base#` will be replaced by the base directory |
 | `pubSubTopic` | the name of the Google PubSub subscription to listen to |
 | `ctutils` | path to the ct-utils lib |
