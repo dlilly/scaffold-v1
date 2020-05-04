@@ -2,28 +2,21 @@ const _ = require('lodash')
 const CT = require('ctvault')
 
 let payloadGenerator = {
-    extensions: (hook, data) => {
-        let url = `${data.protocol}://${data.host}/api${hook.path}`
-        const triggers = _.map(Object.keys(hook.triggers), key => {
-            return {
-                resourceTypeId: key,
-                actions: _.map(Object.keys(hook.triggers[key]), ak => `${ak}`)
-            }
-        })
-
-        return {
-            key: hook.key,
-            triggers,
-            destination: {
-                type: "HTTP",
-                url,
-                authentication: {
-                    type: "AuthorizationHeader",
-                    headerValue: data.project
-                }
+    extensions: (hook, data) => ({
+        key: hook.key,
+        triggers: _.map(Object.keys(hook.triggers), key => ({
+            resourceTypeId: key,
+            actions: _.map(Object.keys(hook.triggers[key]), ak => `${ak}`)
+        })),
+        destination: {
+            type: "HTTP",
+            url: `${data.protocol}://${data.host}/api${hook.path}`,
+            authentication: {
+                type: "AuthorizationHeader",
+                headerValue: data.project
             }
         }
-    },
+    }),
 
     subscriptions: service => ({
         key: service.key,
@@ -42,7 +35,7 @@ let admin = [
         path: '/project',
         handler: async (data, ct) => ({
             extensions: await ct.extensions.get(),
-            subscribers: await ct.subscriptions.get()
+            subscriptions: await ct.subscriptions.get()
         })
     },
     {
@@ -51,8 +44,8 @@ let admin = [
         handler: async (data, ct) => await CT.getClients()
     },
     {
-        key: 'admin-create-credentials',
-        path: '/credentials',
+        key: 'admin-register-project',
+        path: '/projects',
         method: 'post',
         handler: async (data, ct) => await CT.saveCredential(data.object)
     },
@@ -66,15 +59,6 @@ let admin = [
         }
     }
 ]
-
-// sm.register({
-    //     relativePath: '/pubsub',
-    //     method: 'POST',
-    //     handler: async (data, ct) => {
-    //         processMessage(data)
-    //         return data
-    //     }
-    // })
     
 _.each(serviceTypes, type => {
     admin.push({

@@ -2,15 +2,13 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const express = require('express')
 const middleware = require('./middleware')
-require('./utils')
 
 let router = express.Router()
 let routes = []
 
-router.processPubSub = require('./subscriber')
+router.processPubSub = require('./subscriber')(router)
 
 let scaffoldModuleDir = (`${__dirname}/../modules`)
-
 let directories = _.map(_.filter(fs.readdirSync(scaffoldModuleDir, { withFileTypes: true }), dir => dir.isDirectory() && _.includes(fs.readdirSync(`${scaffoldModuleDir}/${dir.name}`), 'scaffold.js')), e => `${scaffoldModuleDir}/${e.name}`)
 
 // local method declarations
@@ -19,9 +17,13 @@ let register = (type, module) => service => {
     service.type = type
     service.method = (service.method || 'get').toLowerCase()
 
+    if (service.type === 'subscriptions') {
+        service.method = 'sub'
+    }
+
     routes.push(service)
 
-    logger.debug(`[ reg ] module [ ${module} ] [ ${service.method.toUpperCase()} ${service.path} ]`)
+    logger.debug(`[ reg ] module [ ${module} ] [ ${service.method.toUpperCase()} ${service.path || service.key} ]`)
 
     switch (type) {
         case 'extensions':

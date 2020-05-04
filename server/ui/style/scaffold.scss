@@ -3,8 +3,14 @@
     top: 6px;
 }
 
-#credentialDetail {
+#projectDetail {
     overflow: scroll;
+}
+
+#projectDetailServices {
+    .endpoint-url {
+        font-size: 0.8em;
+    }
 }
 
 ul {
@@ -21,9 +27,17 @@ ul {
             font-weight: bold;
         }
     }
+
+    .extensions, .subscriptions {
+        .icon {
+            font-size: 1.4em;
+            color: #0D9DF8;
+            cursor: pointer;
+        }
+    }
 }
 
-#credentialCreate {
+#projectCreate {
     .center {
         text-align: center;
         font-size: 0.9em;
@@ -57,6 +71,30 @@ ul {
     }
 }
 
+#sharedServicesList {
+    .microservice-path {
+        font-family: Lucida Console,Lucida Sans Typewriter,monaco,Bitstream Vera Sans Mono,monospace; 
+    }
+    
+    .badge {
+        text-transform: uppercase;
+        color: #fff;
+        font-size: 0.70em;
+        width: 50%;
+        position: relative;
+        top: 4px;
+        left: 25%;
+
+        &-get {
+            background-color: #20AD92;
+        }
+
+        &-post {
+            background-color: #F5A730;
+        }
+    }
+}
+
 input[type=checkbox]{
 	height: 0;
 	width: 0;
@@ -65,7 +103,7 @@ input[type=checkbox]{
 
 .toggle-switch {
 	cursor: pointer;
-	text-indent: -9999px;
+	// text-indent: -9999px;
     width: 60px;
     height: 30px;
 	background: grey;
@@ -73,13 +111,25 @@ input[type=checkbox]{
 	border-radius: 100px;
 	position: relative;
     padding: 0;
+    text-align: center;
+
+    .spinner-border {
+        height: 20px;
+        width: 20px;
+        position: relative;
+        top: 5px;
+        font-size: 0.75em;
+        &.hidden {
+            display: none;
+        }
+    }
 }
 
-.toggle-switch:after {
+.toggle-switch.inactive:after {
 	content: '';
 	position: absolute;
-	top: 4px;
-	left: 4px;
+	top: 5px;
+	left: 5px;
 	width: 20px;
 	height: 20px;
 	background: #fff;
@@ -91,19 +141,12 @@ input[type=checkbox]{
 	background: #bada55;
 }
 
-.toggle:checked + .toggle-switch:after {
+.toggle:checked + .toggle-switch.inactive:after {
 	left: calc(100% - 5px);
 	transform: translateX(-100%);
 }
 
-.toggle-switch:active:after {
-	width: 30px;
-}
-
-// centering
-body {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100vh;
+.toggle + .toggle-switch.inprogress:after {
+	left: calc(50%);
+	transform: translateX(-50%);
 }

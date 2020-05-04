@@ -1,5 +1,6 @@
 const cors = require('cors')
 const bodyParser = require('body-parser')
+require('./utils')
 
 // express app setup
 const express = require('express')
